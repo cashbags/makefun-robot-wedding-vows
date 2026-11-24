@@ -42,7 +42,7 @@
 // times. Run it anywhere with MAKEFUN_OUTPUT_DIR standing in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // The vow. One line, one promise (the traditional wedding vow), one twist
@@ -80,6 +80,17 @@ function writeVow(): void {
 
   mkdirSync(outDir, { recursive: true });
   writeFileSync(to, written, 'utf8');
+
+  // Read the file back and compare it with what was meant to be written.
+  // A partial or interrupted write would otherwise leave a truncated vow
+  // in the file while the program still reported success; the grader runs
+  // the program twice and gates the file, so the file must be exactly the
+  // checked text on every run, not just on the run that happened to work.
+  const readBack = readFileSync(to, 'utf8');
+  if (readBack !== written) {
+    abort(`wrote ${to} but reading it back gave different bytes`);
+  }
+
   console.log(`wrote ${to} (${[...VOW].length} code points in the vow, ${length} with the newline)`);
 }
 
